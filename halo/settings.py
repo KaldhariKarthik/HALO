@@ -55,7 +55,7 @@ ROOT_URLCONF = 'halo.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': ['C:/Users/karth/Desktop/UPSKILL/HALO/PHASE1/beamcontrol/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

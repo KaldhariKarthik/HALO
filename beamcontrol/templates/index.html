@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>HALO Beam Detection</title>
+    <title>Live Video Stream</title>
 </head>
 <body>
-    <h2>Detected Beam: {{ text }}</h2>
+    <h1>Live Video Streaming with Django</h1>
+    <img src="{% url 'video_feed' %}" width="720" height="480" />
 </body>
 </html>
