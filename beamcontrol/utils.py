@@ -1,5 +1,12 @@
 import cv2
 import numpy as np
+from .inference import detect_objects_from_frame  # Your detector
+
+# Global variable to hold detection info
+last_detection = {
+    'detected': False,
+    'coords': None,
+}
 
 def gen_frames():
     cap = cv2.VideoCapture(0)
@@ -11,37 +18,45 @@ def gen_frames():
         if not success:
             break
         
-        frame = cv2.flip(frame, 1)  # Mirror
+        # Mirror the frame horizontally (flip around y-axis)
+        frame = cv2.flip(frame, 1)
         
-        # --- Flashlight detection start ---
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        
-        # Threshold to get very bright spots
-        _, thresh = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY)
-        
-        # Find contours of bright spots
-        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        
+        # --- YOLOv5 AI Detection start ---
+        detections = detect_objects_from_frame(frame)
         flashlight_detected = False
-        
-        for cnt in contours:
-            area = cv2.contourArea(cnt)
-            if area > 100:  # tweak this threshold for size of bright spot
-                # Draw bounding box around detected flashlight area
-                x, y, w, h = cv2.boundingRect(cnt)
-                cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 255), 2)
+        coords = None
+
+        for det in detections:
+            x1, y1, x2, y2 = det['bbox']
+            cls_id = det['class_id']
+            conf = det['confidence']
+            label = f"Class {cls_id} ({conf:.2f})"
+
+            # Check if this is flashlight class (replace 0 with your actual class id)
+            if cls_id == 0:
                 flashlight_detected = True
-        
-        # Put detection text on frame
+                coords = (x1, y1, x2, y2)
+
+            # Draw bounding box: RED for flashlight, GREEN otherwise
+            color = (0, 0, 255) if cls_id == 0 else (0, 255, 0)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+            cv2.putText(frame, label, (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+
+        # If flashlight detected, put text in red on top-left corner
         if flashlight_detected:
-            cv2.putText(frame, "Flashlight Detected!", (10, 30), 
+            cv2.putText(frame, "Flashlight Detected!", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-        # --- Flashlight detection end ---
-        
+
+        # Update global detection info (used by your Django JSON status view)
+        last_detection['detected'] = flashlight_detected
+        last_detection['coords'] = coords
+
+        # Encode the processed frame as JPEG for streaming
         ret, buffer = cv2.imencode('.jpg', frame)
-        frame = buffer.tobytes()
-        
+        frame_bytes = buffer.tobytes()
+
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
     
     cap.release()

@@ -1,10 +1,76 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <title>Live Video Stream</title>
+    <title>HALO</title>
+    <style>
+        body {
+            background-color: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            height: 100vh;
+            justify-content: center;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #video-container {
+            position: relative;
+            width: 640px;
+            height: 480px;
+            margin-bottom: 20px;
+        }
+        #video-stream {
+            border: 2px solid white;
+            display: block;
+            margin: 0 auto;
+        }
+        #status {
+            font-size: 18px;
+            background-color: #222;
+            padding: 10px 20px;
+            border-radius: 8px;
+            width: 640px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <h1>Live Video Streaming with Django</h1>
-    <img src="{% url 'video_feed' %}" width="720" height="480" />
+    <h1>Live Detection Stream</h1>
+    <div id="video-container">
+        <img id="video-stream" src="{% url 'video_feed' %}" width="640" height="480" />
+    </div>
+    <div id="status">
+        Flashlight detected: <span id="flashlight-status">- - - -</span> <br/>
+        Coordinates: <span id="flashlight-coords">- - - -</span>
+    </div>
+
+    <script>
+        // This assumes you send detection info as headers or a separate endpoint;
+        // For example, you can implement a simple polling to a JSON endpoint that returns
+        // detection status and coordinates, then update the status fields dynamically.
+
+        // Below is a dummy example of polling every 1 second (replace URL with your endpoint)
+
+        async function updateStatus() {
+            try {
+                const response = await fetch('/detection_status/');  // You need to create this endpoint
+                if (!response.ok) throw new Error('Network response not ok');
+                const data = await response.json();
+
+                document.getElementById('flashlight-status').textContent = data.detected ? 'Yes' : 'No';
+                document.getElementById('flashlight-coords').textContent = data.coords || '- - - -';
+            } catch (e) {
+                // If error, keep default or show error
+                document.getElementById('flashlight-status').textContent = '- - - -';
+                document.getElementById('flashlight-coords').textContent = '- - - -';
+            }
+        }
+
+        setInterval(updateStatus, 1000);  // Update every second
+    </script>
 </body>
 </html>
