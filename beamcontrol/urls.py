@@ -1,8 +1,10 @@
 from django.urls import path
-from .views import index, video_feed, detection_status
+from . import views  # or from halo import views, if you're in project-level urls.py
 
 urlpatterns = [
-    path('', index, name='index'),
-    path('video_feed/', video_feed, name='video_feed'),
-    path('detection_status/', detection_status, name='detection_status'),
+    path('', views.index, name='index'),
+    path('video_feed/', views.video_feed, name='video_feed'),
+    path('detection_status/', views.detection_status, name='detection_status'),
+    path('flashlight_data/', views.flashlight_data, name='flashlight_data'),  # ✅ THIS LINE IS MISSING
 ]
+

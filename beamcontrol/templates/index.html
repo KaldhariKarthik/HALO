@@ -36,6 +36,9 @@
             width: 640px;
             text-align: center;
         }
+        .coord-entry {
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -43,34 +46,48 @@
     <div id="video-container">
         <img id="video-stream" src="{% url 'video_feed' %}" width="640" height="480" />
     </div>
+
     <div id="status">
-        Flashlight detected: <span id="flashlight-status">- - - -</span> <br/>
-        Coordinates: <span id="flashlight-coords">- - - -</span>
+        Flashlight detected: <span id="flashlight-status">No</span><br/>
+        <div id="flashlight-coords">
+            No detections.
+        </div>
     </div>
 
     <script>
-        // This assumes you send detection info as headers or a separate endpoint;
-        // For example, you can implement a simple polling to a JSON endpoint that returns
-        // detection status and coordinates, then update the status fields dynamically.
-
-        // Below is a dummy example of polling every 1 second (replace URL with your endpoint)
-
-        async function updateStatus() {
+        async function updateFlashlightData() {
             try {
-                const response = await fetch('/detection_status/');  // You need to create this endpoint
-                if (!response.ok) throw new Error('Network response not ok');
+                const response = await fetch('/flashlight_data/');
+                if (!response.ok) throw new Error('Failed to fetch');
                 const data = await response.json();
 
-                document.getElementById('flashlight-status').textContent = data.detected ? 'Yes' : 'No';
-                document.getElementById('flashlight-coords').textContent = data.coords || '- - - -';
-            } catch (e) {
-                // If error, keep default or show error
-                document.getElementById('flashlight-status').textContent = '- - - -';
-                document.getElementById('flashlight-coords').textContent = '- - - -';
+                const coordsList = data.coordinates;
+                const statusEl = document.getElementById('flashlight-status');
+                const coordsEl = document.getElementById('flashlight-coords');
+
+                if (coordsList.length === 0) {
+                    statusEl.textContent = 'No';
+                    coordsEl.innerHTML = 'No detections.';
+                } else {
+                    statusEl.textContent = 'Yes';
+                    coordsEl.innerHTML = ''; // Clear previous
+                    coordsList.forEach((coord, i) => {
+                        coordsEl.innerHTML += `
+                            <div class="coord-entry">
+                                Detection ${i + 1}: x1=${coord.x1}, y1=${coord.y1}, x2=${coord.x2}, y2=${coord.y2}
+                            </div>
+                        `;
+                    });
+                }
+
+            } catch (error) {
+                document.getElementById('flashlight-status').textContent = '- - -';
+                document.getElementById('flashlight-coords').innerHTML = 'Error fetching data.';
             }
         }
 
-        setInterval(updateStatus, 1000);  // Update every second
+        // Refresh every 10 ms (safe lower limit)
+        setInterval(updateFlashlightData, 100);
     </script>
 </body>
 </html>

@@ -1,18 +1,12 @@
-from django.http import StreamingHttpResponse
+from django.http import StreamingHttpResponse, JsonResponse
 from django.shortcuts import render
-from .utils import gen_frames
-from django.http import JsonResponse
-from .utils import last_detection
-
+from .utils import gen_frames, get_flashlight_coordinates, last_detection
 
 def index(request):
-    # Change this line depending on your folder structure and settings.py
-    return render(request, 'index.html')  # or 'index.html' if you move template
-
+    return render(request, 'index.html')
 
 def video_feed(request):
     return StreamingHttpResponse(gen_frames(), content_type='multipart/x-mixed-replace; boundary=frame')
-
 
 def detection_status(request):
     if last_detection['detected']:
@@ -23,3 +17,7 @@ def detection_status(request):
         'detected': last_detection['detected'],
         'coords': coords_str
     })
+
+def flashlight_data(request):
+    coords = get_flashlight_coordinates()
+    return JsonResponse({"coordinates": coords})
